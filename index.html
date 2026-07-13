@@ -96,9 +96,12 @@
   .swatch::-webkit-color-swatch{border:1px solid var(--border); border-radius:50%}
   .swatch::-moz-color-swatch{border:1px solid var(--border); border-radius:50%}
 
-  /* ---------- Header while viewing: fixed, hides on scroll-down ---------- */
+  /* ---------- Header while viewing: fixed; collapses to a thick handle ---------- */
   .hover-zone{display:none}
-  body.viewing .hover-zone{display:block; position:fixed; top:0; left:0; right:0; height:24px; z-index:35}
+  body.viewing .hover-zone{display:block; position:fixed; top:0; left:0; right:0; height:22px; z-index:35; cursor:pointer}
+  /* when the header is collapsed it shrinks to this thick, tappable line sitting over the content */
+  body.viewing.hdr-hidden .hover-zone::before{content:""; position:absolute; top:0; left:0; right:0; height:7px; background:var(--accent); box-shadow:0 1px 6px var(--shadow)}
+  body.viewing.hdr-hidden .hover-zone::after{content:""; position:absolute; top:1.5px; left:50%; transform:translateX(-50%); width:46px; height:4px; border-radius:2px; background:var(--accent-contrast); opacity:.7}
   body.viewing .topbar{
     position:fixed; top:0; left:0; right:0; z-index:36;
     box-shadow:0 6px 22px var(--shadow);
@@ -283,7 +286,7 @@
     <div class="empty-inner">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       <p class="empty-title">Drop an HTML file to view</p>
-      <p class="empty-sub">Drag &amp; drop anywhere, paste, or tap to open. HTML renders; CSS, SCSS, JS, TS &amp; template files show as highlighted source.</p>
+      <p class="empty-sub">Drag &amp; drop anywhere, paste, or tap to open. Renders .html; shows .css, .scss, .js, .ts, .jsx, .vue, .svelte &amp; more as highlighted source.</p>
     </div>
   </section>
   <iframe id="preview" class="preview" title="Rendered HTML preview" sandbox="allow-same-origin" referrerpolicy="no-referrer" hidden></iframe>
@@ -1686,14 +1689,14 @@ return He}()
     if (m === "preview"){
       codeView.hidden = true;
       preview.hidden = false;
-      hideHeader();          // rendered view: start with the header hidden (unobstructed first paint)
+      revealHeader();        // rendered view: header shows, then collapses to the handle after 3s
     } else {
       buildCode();
       preview.hidden = true;
       codeView.hidden = false;
       codeView.scrollTop = 0;
       codeView.scrollLeft = 0;
-      showHeader();          // source view: header shown; the pane is offset below it
+      showHeader(); clearTimeout(hdrIdleTimer);   // source view: header stays (content sits below it)
     }
     updateViewBtn();
     updateFormatBtn();
@@ -1859,22 +1862,24 @@ return He}()
     if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openDialog(); }
   });
 
-  // ---------- Header: hide on scroll-down; show on scroll-up or after 5s idle ----------
-  var HDR_IDLE_MS = 5000, HDR_THRESH = 6;
+  // ---------- Header: while viewing the rendered file it auto-hides after 3s, ----------
+  // ---------- collapsing to a thick handle; hover / touch / scroll-up brings it back. --
+  var HDR_IDLE_MS = 3000, HDR_THRESH = 6;
   var hdrIdleTimer = null;
   var lastPos = { win:0, code:0, frame:0 };
 
   function showHeader(){ body.classList.remove("hdr-hidden"); }
-  function hideHeader(){ if (body.classList.contains("viewing")) body.classList.add("hdr-hidden"); }
-  function armIdleReveal(){ clearTimeout(hdrIdleTimer); hdrIdleTimer = setTimeout(showHeader, HDR_IDLE_MS); }
+  // only the rendered (preview) view auto-hides; the source view keeps the header (its content sits below it)
+  function hideHeader(){ if (body.classList.contains("viewing") && mode === "preview") body.classList.add("hdr-hidden"); }
+  function armIdleHide(){ clearTimeout(hdrIdleTimer); hdrIdleTimer = setTimeout(hideHeader, HDR_IDLE_MS); }
+  function revealHeader(){ showHeader(); armIdleHide(); }
 
   function onScroll(key, pos){
     if (!body.classList.contains("viewing")) return;
     var delta = pos - lastPos[key];
     lastPos[key] = pos;
-    if (delta > HDR_THRESH){ hideHeader(); armIdleReveal(); }                    // down -> hide, re-arm 5s reveal
-    else if (delta < -HDR_THRESH){ showHeader(); clearTimeout(hdrIdleTimer); }   // up   -> show
-    else { armIdleReveal(); }                                                    // near-still -> keep 5s reveal armed
+    if (delta > HDR_THRESH){ hideHeader(); }            // scroll down -> collapse to the handle
+    else if (delta < -HDR_THRESH){ revealHeader(); }    // scroll up   -> reveal, then auto-hide after 3s
   }
 
   window.addEventListener("scroll", function(){ onScroll("win", window.pageYOffset || root.scrollTop || 0); }, { passive:true });
@@ -1907,9 +1912,13 @@ return He}()
   });
   function hasFiles(e){ return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") !== -1; }
 
-  // Reveal by moving the pointer to the very top (desktop) or tapping the top strip (mobile).
-  hoverZone.addEventListener("mouseenter", showHeader);
-  hoverZone.addEventListener("click", showHeader);
+  // Reveal by moving the pointer onto the top strip / handle (desktop) or tapping it (mobile).
+  hoverZone.addEventListener("mouseenter", revealHeader);
+  hoverZone.addEventListener("click", revealHeader);
+  hoverZone.addEventListener("touchstart", function(){ revealHeader(); }, { passive:true });
+  // keep the header up while the pointer is over it; re-arm the 3s auto-hide when it leaves
+  topbar.addEventListener("mouseenter", function(){ showHeader(); clearTimeout(hdrIdleTimer); });
+  topbar.addEventListener("mouseleave", function(){ armIdleHide(); });
 
   // Measure the header so the source view can clear the fixed bar.
   function measureHeader(){ root.style.setProperty("--hdr-h", (topbar ? topbar.offsetHeight : 56) + "px"); }
