@@ -26,12 +26,18 @@ toolbars, no accounts, no uploads. Everything runs locally in your browser.
 - 📄 **Web source files** — `.css`, `.scss`, `.sass`, `.less`, `.js`, `.jsx`,
   `.ts`, `.tsx`, `.php`, `.vue`, `.svelte`, `.astro`, and
   [many more](#supported-file-types) open directly into the highlighted source.
+- ✨ **Format / beautify** — got a minified or obfuscated file? A `{ }` toggle
+  pretty-prints HTML, CSS/SCSS/LESS, and JS/TS/JSX/JSON on demand (re-indented,
+  one statement per line), and flips back to the raw original. It fixes *layout*
+  — perfect for un-minifying — but it can't rename mangled identifiers in truly
+  obfuscated code, so those names stay as they are.
 - ✅ **File-type checking** — only HTML-family files are accepted; other types
   (Markdown, data formats, EPUB, PDF) are politely declined so you land in the
   right viewer.
 - 🏷️ **Filename in the header** — when you open or drop a file, its name shows
-  in the top-left.
-- 📋 **Copy** — copies the raw source to your clipboard.
+  in the top-left, next to its file-type icon.
+- 📋 **Copy** — copies the source to your clipboard (the formatted version when
+  **Format** is on).
 - 🗑️ **Clear** — empties the view.
 - 🎨 **Pick any background color** — a color swatch in the header lets you choose
   any background. Text, borders, and syntax colors automatically adapt for
@@ -50,8 +56,8 @@ toolbars, no accounts, no uploads. Everything runs locally in your browser.
 - 🔒 **Safe by default** — HTML renders inside a `sandbox`ed iframe with **no
   `allow-scripts`**, so a viewed page displays with its own styles but **can
   never run JavaScript**. Your files never leave your device.
-- 🪶 **One file, no build** — `index.html` is self-contained (~150 KB) and the
-  viewer works offline, even straight from `file://`.
+- 🪶 **One file, no build** — `index.html` is self-contained (~255 KB, libraries
+  bundled inline) and the viewer works offline, even straight from `file://`.
 - 📊 **Privacy-friendly analytics** — the hosted site uses a self-hosted,
   cookieless [Plausible](https://plausible.io/) instance (see [Privacy](#privacy)).
 
@@ -122,10 +128,12 @@ Everything is in [`index.html`](index.html):
   `allow-same-origin` only so the viewer can follow the frame's scroll to drive
   the auto-hiding header; with no `allow-scripts`, no script ever runs.)
 - [**highlight.js**](https://github.com/highlightjs/highlight.js) `v11.9.0`
-  (BSD-3-Clause) powers the code view, embedded inline (minified, with its
-  license banner retained), so highlighting works with **no network
-  dependencies** and fully offline. The only external request is the analytics
-  script on the hosted site (see [Privacy](#privacy)).
+  (BSD-3-Clause) powers the code view, and [**js-beautify**](https://github.com/beautifier/js-beautify)
+  `v1.15.1` (MIT) powers the **Format** toggle. Both are embedded inline
+  (minified, with their license banners retained), so highlighting and
+  beautifying work with **no network dependencies** and fully offline. The only
+  external request is the analytics script on the hosted site (see
+  [Privacy](#privacy)).
 
 ## Privacy
 
@@ -141,9 +149,26 @@ tracking, no advertising. Plausible automatically ignores `localhost` and
 The only thing stored on your device is your chosen background color (a cookie,
 with a `localStorage` fallback).
 
+## Credits
+
+Bundled inline (each retains its own license; banners kept in `index.html`):
+
+| Component | Version | License | Used for |
+| --------- | ------- | ------- | -------- |
+| [highlight.js](https://github.com/highlightjs/highlight.js) | 11.9.0 | BSD-3-Clause | Syntax highlighting in the code view |
+| [js-beautify](https://github.com/beautifier/js-beautify) | 1.15.1 | MIT | The **Format / beautify** toggle |
+
+Other external components:
+
+- **File-type icon** — the HTML5 shield favicon/header icon is from
+  [vscode-icons](https://github.com/vscode-icons/vscode-icons) (MIT).
+- **Analytics** — the hosted site uses [Plausible](https://plausible.io/)
+  (self-hosted, cookieless).
+
 ## License
 
 [MIT](LICENSE) © 2026 Michal Ferber, aka **TechGuyWithABeard**.
 
-The bundled third-party library retains its own license (highlight.js:
-BSD-3-Clause) — see [`LICENSE`](LICENSE) for details.
+Bundled third-party components retain their own licenses (highlight.js:
+BSD-3-Clause; js-beautify: MIT; vscode-icons: MIT) — see [`LICENSE`](LICENSE)
+and [Credits](#credits) for details.
