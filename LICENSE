@@ -22,10 +22,18 @@ SOFTWARE.
 
 ---
 
-This project bundles one third-party library inline in index.html:
+This project bundles third-party libraries inline in index.html:
 
   • highlight.js v11.9.0 — BSD-3-Clause License
     Copyright (c) 2006, Ivan Sagalaev and other contributors
     https://github.com/highlightjs/highlight.js/blob/main/LICENSE
 
-Its license banner is retained inline where the library is embedded.
+  • js-beautify v1.15.1 — MIT License
+    Copyright (c) 2007-2018 Einar Lielmanis, Liam Newman, and contributors
+    https://github.com/beautifier/js-beautify/blob/main/LICENSE
+
+Their license banners are retained inline where each library is embedded.
+
+The HTML file-type icon (favicon and header icon) is from vscode-icons,
+MIT License, Copyright (c) 2016 Roberto Huertas and contributors
+(https://github.com/vscode-icons/vscode-icons/blob/master/LICENSE).
