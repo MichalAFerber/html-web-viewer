@@ -48,12 +48,15 @@
     -webkit-backdrop-filter:saturate(180%) blur(10px);
     border-bottom:1px solid var(--border-soft);
   }
+  .brand-icon{flex:0 0 auto; width:24px; height:24px; display:block; border-radius:5px}
   .doc-title{
     flex:1 1 auto; min-width:0;
     font-size:clamp(.9rem,3.3vw,1.1rem); font-weight:600; letter-spacing:-.01em;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text);
   }
   .actions{flex:0 0 auto; display:flex; align-items:center; gap:.1rem}
+  /* Empty state (no file open): show just the icon + page title. */
+  body:not(.viewing) .actions{display:none}
   .iconbtn{
     display:inline-grid; place-items:center;
     width:40px; height:40px; padding:0;
@@ -214,7 +217,8 @@
 <div class="hover-zone" id="hoverZone" aria-hidden="true"></div>
 
 <header class="topbar">
-  <span class="doc-title" id="docTitle"></span>
+  <img id="brandIcon" class="brand-icon" alt="" aria-hidden="true">
+  <span class="doc-title" id="docTitle">HTML Viewer</span>
   <nav class="actions" aria-label="Actions">
     <button id="btnView" class="iconbtn tip" type="button" hidden data-tip="View source" aria-label="View source code">
       <svg id="viewIconCode" viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
@@ -1505,6 +1509,11 @@ return He}()
   var iconEye   = id("viewIconEye");
   var footerEl  = id("footer");
   var topbar    = doc.querySelector(".topbar");
+  var brandIcon = id("brandIcon");
+
+  // Reuse the favicon (single source of truth) for the header brand icon.
+  var favLink = doc.querySelector('link[rel="icon"]');
+  if (brandIcon && favLink) brandIcon.src = favLink.href;
 
   var BASE_TITLE = "HTML Viewer";
   var MAX_HIGHLIGHT = 400000;   // skip highlighting past ~400 KB to stay snappy
@@ -1583,28 +1592,31 @@ return He}()
     codeBuiltFor = null;
 
     empty.hidden = true;
-    docTitle.textContent = name || "";
+    docTitle.textContent = name || BASE_TITLE;
     doc.title = name ? name + " — " + BASE_TITLE : BASE_TITLE;
     body.classList.add("viewing");
-    resetHeader();
 
     btnView.hidden = !previewable;
     if (previewable) preview.srcdoc = text;
-    setMode(previewable ? "preview" : "code");
+    setMode(previewable ? "preview" : "code");   // preview starts with the header hidden
     window.scrollTo(0, 0);
   }
 
   function setMode(m){
     mode = m;
+    clearTimeout(hdrIdleTimer);
+    lastPos.win = lastPos.code = lastPos.frame = 0;   // reset scroll baseline on a view switch
     if (m === "preview"){
       codeView.hidden = true;
       preview.hidden = false;
+      hideHeader();          // rendered view: start with the header hidden (unobstructed first paint)
     } else {
       buildCode();
       preview.hidden = true;
       codeView.hidden = false;
       codeView.scrollTop = 0;
       codeView.scrollLeft = 0;
+      showHeader();          // source view: header shown; the pane is offset below it
     }
     updateViewBtn();
   }
@@ -1659,7 +1671,7 @@ return He}()
     codeInner.textContent = ""; codeInner.className = "hljs"; gutter.textContent = "";
     btnView.hidden = true;
     empty.hidden = false;
-    docTitle.textContent = "";
+    docTitle.textContent = BASE_TITLE;
     doc.title = BASE_TITLE;
     body.classList.remove("viewing", "hdr-hidden");
     clearTimeout(hdrIdleTimer);
@@ -1730,7 +1742,6 @@ return He}()
   function showHeader(){ body.classList.remove("hdr-hidden"); }
   function hideHeader(){ if (body.classList.contains("viewing")) body.classList.add("hdr-hidden"); }
   function armIdleReveal(){ clearTimeout(hdrIdleTimer); hdrIdleTimer = setTimeout(showHeader, HDR_IDLE_MS); }
-  function resetHeader(){ lastPos.win = lastPos.code = lastPos.frame = 0; clearTimeout(hdrIdleTimer); showHeader(); }
 
   function onScroll(key, pos){
     if (!body.classList.contains("viewing")) return;

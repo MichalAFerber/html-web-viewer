@@ -38,9 +38,12 @@ toolbars, no accounts, no uploads. Everything runs locally in your browser.
   contrast. Your choice is **remembered** — saved to a cookie, with a
   `localStorage` fallback so even a downloaded `file://` copy remembers it.
   Starts on white.
-- 🫥 **Distraction-free** — the header hides when you scroll **down** and comes
-  back when you scroll **up**, when you pause for 5 seconds, or when you move to
-  the top edge. The footer has a **×** to tuck it away entirely.
+- 🫥 **Distraction-free** — a **rendered page opens with the header hidden** for
+  an unobstructed first paint. The header hides when you scroll **down** and
+  comes back when you scroll **up**, when you pause for 5 seconds, or when you
+  move to the top edge; the footer has a **×** to tuck it away entirely. The
+  header shows the file-type icon next to the filename (and just the icon + app
+  name on the empty screen).
 - 📥 **Full-screen drop zone** — drag a file and the whole window becomes the
   target. You can also **paste** source text directly.
 - 📱 **Mobile-first** & responsive, with safe-area support for notched phones.
