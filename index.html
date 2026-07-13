@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" id="themeColor">
-<meta name="description" content="A fast, single-file HTML viewer. Drop an HTML file to render it, or any text file to read the source with syntax highlighting.">
-<title>MyKK HTML Viewer</title>
+<meta name="description" content="A fast, single-file HTML viewer. Drop an HTML file to render it, or a CSS/SCSS/JS/TS/template file to read the source with syntax highlighting.">
+<title>HTML Viewer</title>
 <!-- Privacy-friendly, cookieless analytics (self-hosted Plausible) -->
 <script defer data-domain="html-viewer.us" src="https://plausible.thompsonblack.us/js/script.js"></script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22%234f46e5%22%2F%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M9.5%2016.6%205.4%2012l4.1-4.6L8%206l-5.6%206L8%2018zM14.5%2016.6%2018.6%2012l-4.1-4.6L16%206l5.6%206L16%2018z%22%20transform%3D%22scale(0.78)%20translate(3.4%203.4)%22%2F%3E%3C%2Fsvg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Ctitle%3Efile_type_html%3C%2Ftitle%3E%3Cpolygon%20points%3D%225.902%2027.201%203.655%202%2028.345%202%2026.095%2027.197%2015.985%2030%205.902%2027.201%22%20style%3D%22fill%3A%23e44f26%22%2F%3E%3Cpolygon%20points%3D%2216%2027.858%2024.17%2025.593%2026.092%204.061%2016%204.061%2016%2027.858%22%20style%3D%22fill%3A%23f1662a%22%2F%3E%3Cpolygon%20points%3D%2216%2013.407%2011.91%2013.407%2011.628%2010.242%2016%2010.242%2016%207.151%2015.989%207.151%208.25%207.151%208.324%207.981%209.083%2016.498%2016%2016.498%2016%2013.407%22%20style%3D%22fill%3A%23ebebeb%22%2F%3E%3Cpolygon%20points%3D%2216%2021.434%2015.986%2021.438%2012.544%2020.509%2012.324%2018.044%2010.651%2018.044%209.221%2018.044%209.654%2022.896%2015.986%2024.654%2016%2024.65%2016%2021.434%22%20style%3D%22fill%3A%23ebebeb%22%2F%3E%3Cpolygon%20points%3D%2215.989%2013.407%2015.989%2016.498%2019.795%2016.498%2019.437%2020.507%2015.989%2021.437%2015.989%2024.653%2022.326%2022.896%2022.372%2022.374%2023.098%2014.237%2023.174%2013.407%2022.341%2013.407%2015.989%2013.407%22%20style%3D%22fill%3A%23fff%22%2F%3E%3Cpolygon%20points%3D%2215.989%207.151%2015.989%209.071%2015.989%2010.235%2015.989%2010.242%2023.445%2010.242%2023.445%2010.242%2023.455%2010.242%2023.517%209.548%2023.658%207.981%2023.732%207.151%2015.989%207.151%22%20style%3D%22fill%3A%23fff%22%2F%3E%3C%2Fsvg%3E">
 <style>
   :root{
     --bg:#ffffff; --surface:#ffffff; --header-bg:rgba(255,255,255,.9);
@@ -17,6 +17,7 @@
     --accent:#4f46e5; --accent-contrast:#ffffff;
     --code-bg:#f6f8fa; --code-text:#1f2328; --hover:#f3f4f6;
     --overlay:rgba(79,70,229,.10); --shadow:rgba(0,0,0,.12);
+    --hdr-h:56px;   /* measured at runtime; source view offsets by this so the fixed header never covers it */
     /* Syntax highlighting (light-background palette; overridden in JS for dark) */
     --hl-comment:#6e7781; --hl-keyword:#cf222e; --hl-tag:#116329; --hl-attr:#0550ae;
     --hl-string:#0a3069; --hl-number:#0550ae; --hl-title:#8250df; --hl-built:#953800;
@@ -31,6 +32,10 @@
     min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
     overflow-wrap:break-word;
   }
+  /* While viewing, the app fills the viewport and the preview/source panes scroll
+     internally (keeps the horizontal code scrollbar reachable, and lets the header
+     react to scrolling in either view). */
+  body.viewing{height:100vh; height:100dvh; overflow:hidden}
   .skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-contrast);padding:.5rem .75rem;border-radius:6px;z-index:100}
   .skip:focus{left:.5rem;top:.5rem}
 
@@ -63,6 +68,7 @@
   .iconbtn.iconbtn-gh svg{width:22px;height:22px;fill:currentColor;stroke:none}
 
   /* Color swatch / picker (native input styled as a round-ish swatch) */
+  .swatch-wrap{display:inline-flex}
   .swatch{
     width:40px; height:40px; padding:0; margin:0;
     border:0; border-radius:9px; background:transparent; cursor:pointer;
@@ -73,18 +79,29 @@
   .swatch::-webkit-color-swatch{border:1px solid var(--border); border-radius:50%}
   .swatch::-moz-color-swatch{border:1px solid var(--border); border-radius:50%}
 
-  /* ---------- Auto-hiding header while viewing ---------- */
+  /* ---------- Header while viewing: fixed, hides on scroll-down ---------- */
   .hover-zone{display:none}
-  body.viewing .hover-zone{display:block; position:fixed; top:0; left:0; right:0; height:22px; z-index:35}
+  body.viewing .hover-zone{display:block; position:fixed; top:0; left:0; right:0; height:24px; z-index:35}
   body.viewing .topbar{
     position:fixed; top:0; left:0; right:0; z-index:36;
-    transform:translateY(-115%); transition:transform .28s ease;
+    box-shadow:0 6px 22px var(--shadow);
+    transition:transform .28s ease, box-shadow .28s ease;
   }
-  body.viewing.peek .topbar{transform:translateY(0); box-shadow:0 6px 22px var(--shadow)}
-  @media (hover:hover){
-    body.viewing .hover-zone:hover ~ .topbar,
-    body.viewing .topbar:hover{transform:translateY(0); box-shadow:0 6px 22px var(--shadow)}
+  body.viewing.hdr-hidden .topbar{transform:translateY(-118%); box-shadow:none}
+
+  /* ---------- Quick tooltips (custom; far faster than the native title delay) ---------- */
+  .tip{position:relative}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute; top:calc(100% + 7px); right:0;
+    background:var(--text); color:var(--bg); font-size:.72rem; font-weight:600; line-height:1.1;
+    white-space:nowrap; padding:.42em .6em; border-radius:6px;
+    opacity:0; pointer-events:none; box-shadow:0 6px 18px var(--shadow);
+    transition:opacity .1s ease .1s; z-index:70;
   }
+  .tip:hover::after, .tip:focus-visible::after{opacity:1}
+  .tip-up::after{top:auto; bottom:calc(100% + 7px)}
+  @media (hover:none){ .tip::after{content:none} }
 
   /* ---------- Main ---------- */
   main{flex:1 1 auto; width:100%; display:flex; flex-direction:column; min-height:0}
@@ -117,12 +134,12 @@
   }
   .gutter{
     position:sticky; left:0; z-index:1; margin:0; flex:0 0 auto;
-    padding:1rem .7rem 2.5rem; text-align:right; white-space:pre; font:inherit;
+    padding:calc(1rem + var(--hdr-h)) .7rem 2.5rem; text-align:right; white-space:pre; font:inherit;
     color:var(--muted); background:var(--code-bg);
     border-right:1px solid var(--border-soft);
     user-select:none; -webkit-user-select:none; min-width:2.6em;
   }
-  .code{margin:0; flex:1 1 auto; padding:1rem 1.15rem 2.5rem; white-space:pre; font:inherit; color:var(--code-text)}
+  .code{margin:0; flex:1 1 auto; padding:calc(1rem + var(--hdr-h)) 1.15rem 2.5rem; white-space:pre; font:inherit; color:var(--code-text)}
   .code code{font:inherit; background:none; padding:0; white-space:pre; display:block}
 
   /* highlight.js token colors, mapped to adaptive CSS variables */
@@ -141,28 +158,37 @@
 
   /* ---------- Footer ---------- */
   .footer{
+    position:relative;
     border-top:1px solid var(--border-soft);
-    padding:.85rem 1rem; padding-bottom:calc(.85rem + env(safe-area-inset-bottom));
+    padding:.85rem 2.6rem; padding-bottom:calc(.85rem + env(safe-area-inset-bottom));
     text-align:center; color:var(--muted); font-size:.8rem; line-height:1.5;
   }
   .footer p{margin:0}
   .footer a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
   .footer a:hover{color:var(--accent)}
+  .footer-close{
+    position:absolute; top:50%; right:.4rem; transform:translateY(-50%);
+    display:inline-grid; place-items:center; width:32px; height:32px; padding:0;
+    background:transparent; color:var(--muted); border:0; border-radius:8px; cursor:pointer;
+    -webkit-tap-highlight-color:transparent; transition:background .15s ease, color .15s ease;
+  }
+  .footer-close:hover{background:var(--hover); color:var(--text)}
+  .footer-close:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .footer-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 
-  /* ---------- Drop overlay ---------- */
+  /* ---------- Drop overlay (full-screen drop target) ---------- */
   .drop-overlay{
-    position:fixed; inset:0; z-index:50; display:none;
-    align-items:center; justify-content:center; padding:1.5rem;
+    position:fixed; inset:0; z-index:50; display:none; padding:12px;
     background:var(--overlay); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
   }
   .drop-overlay.show{display:flex}
   .drop-card{
-    display:flex; flex-direction:column; align-items:center; gap:.75rem;
-    padding:2.5rem 3rem; border:3px dashed var(--accent); border-radius:20px;
-    background:var(--surface); color:var(--accent); font-size:1.25rem; font-weight:650;
+    flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem;
+    border:3px dashed var(--accent); border-radius:20px;
+    background:var(--surface); color:var(--accent); font-size:1.5rem; font-weight:650;
     box-shadow:0 20px 50px var(--shadow); pointer-events:none;
   }
-  .drop-card svg{width:54px;height:54px;stroke:var(--accent);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .drop-card svg{width:72px;height:72px;stroke:var(--accent);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 
   /* ---------- Toast ---------- */
   .toast{
@@ -190,21 +216,20 @@
 <header class="topbar">
   <span class="doc-title" id="docTitle"></span>
   <nav class="actions" aria-label="Actions">
-    <button id="btnView" class="iconbtn" type="button" hidden title="View source" aria-label="View source code">
+    <button id="btnView" class="iconbtn tip" type="button" hidden data-tip="View source" aria-label="View source code">
       <svg id="viewIconCode" viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
       <svg id="viewIconEye" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
     </button>
-    <button id="btnNew" class="iconbtn" type="button" title="New — clear &amp; open a file" aria-label="New: clear and open a file">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-    </button>
-    <button id="btnCopy" class="iconbtn" type="button" title="Copy source" aria-label="Copy source">
+    <button id="btnCopy" class="iconbtn tip" type="button" data-tip="Copy source" aria-label="Copy source">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
     </button>
-    <button id="btnClear" class="iconbtn" type="button" title="Clear" aria-label="Clear the view">
+    <button id="btnClear" class="iconbtn tip" type="button" data-tip="Clear" aria-label="Clear the view">
       <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
     </button>
-    <input id="bgPicker" class="swatch" type="color" value="#ffffff" title="Background color" aria-label="Pick background color">
-    <a id="ghLink" class="iconbtn iconbtn-gh" href="https://github.com/MichalAFerber/html-web-viewer" target="_blank" rel="noopener noreferrer" title="View source on GitHub" aria-label="View source on GitHub">
+    <span class="swatch-wrap tip" data-tip="Background color">
+      <input id="bgPicker" class="swatch" type="color" value="#ffffff" aria-label="Pick background color">
+    </span>
+    <a id="ghLink" class="iconbtn iconbtn-gh tip" href="https://github.com/MichalAFerber/html-web-viewer" target="_blank" rel="noopener noreferrer" data-tip="View source on GitHub" aria-label="View source on GitHub">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
     </a>
   </nav>
@@ -215,18 +240,21 @@
     <div class="empty-inner">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       <p class="empty-title">Drop an HTML file to view</p>
-      <p class="empty-sub">Drag &amp; drop anywhere, paste, or tap to open. HTML renders; CSS, JS, JSON &amp; any text show as highlighted source.</p>
+      <p class="empty-sub">Drag &amp; drop anywhere, paste, or tap to open. HTML renders; CSS, SCSS, JS, TS &amp; template files show as highlighted source.</p>
     </div>
   </section>
-  <iframe id="preview" class="preview" title="Rendered HTML preview" sandbox="" referrerpolicy="no-referrer" hidden></iframe>
+  <iframe id="preview" class="preview" title="Rendered HTML preview" sandbox="allow-same-origin" referrerpolicy="no-referrer" hidden></iframe>
   <div id="codeView" class="codewrap" hidden>
     <pre class="gutter" id="gutter" aria-hidden="true"></pre>
     <pre class="code" id="code"><code id="codeInner" class="hljs"></code></pre>
   </div>
 </main>
 
-<footer class="footer">
+<footer class="footer" id="footer">
   <p>&copy; 2026 | Created with &#10084;&#65039; by <a href="https://michalferber.dev" target="_blank" rel="noopener noreferrer">Michal Ferber</a>, aka <a href="https://techguywithabeard.com" target="_blank" rel="noopener noreferrer">TechGuyWithABeard</a></p>
+  <button id="btnHideFooter" class="footer-close tip tip-up" type="button" data-tip="Hide footer" aria-label="Hide footer">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+  </button>
 </footer>
 
 <div id="dropOverlay" class="drop-overlay" aria-hidden="true">
@@ -237,7 +265,7 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<input id="fileInput" type="file" accept=".html,.htm,.xhtml,.shtml,.svg,.xml,.rss,.atom,.vue,.css,.scss,.sass,.less,.js,.mjs,.cjs,.jsx,.ts,.tsx,.mts,.cts,.json,.json5,.jsonc,.map,.webmanifest,.md,.markdown,.mkd,.yml,.yaml,.toml,.ini,.cfg,.conf,.env,.properties,.py,.rb,.php,.java,.c,.h,.cpp,.cc,.cxx,.hpp,.cs,.go,.rs,.kt,.kts,.swift,.sql,.sh,.bash,.zsh,.pl,.pm,.lua,.r,.graphql,.gql,.diff,.patch,.mk,.makefile,.txt,.text,.log,.csv,.tsv,text/*,image/svg+xml" hidden>
+<input id="fileInput" type="file" accept=".html,.htm,.xhtml,.xht,.shtml,.shtm,.stm,.hta,.mhtml,.mht,.css,.scss,.sass,.less,.styl,.pcss,.postcss,.js,.mjs,.cjs,.jsx,.ts,.mts,.cts,.tsx,.coffee,.htaccess,.htpasswd,.env,.ini,.conf,.webmanifest,.map,.php,.phtml,.asp,.aspx,.ascx,.cshtml,.vbhtml,.jsp,.jspx,.cfm,.erb,.rhtml,.ejs,.hbs,.handlebars,.mustache,.njk,.liquid,.jinja,.j2,.twig,.pug,.jade,.haml,.slim,.vue,.svelte,.astro" hidden>
 
 <script>
 /*!
@@ -1475,8 +1503,10 @@ return He}()
   var btnView   = id("btnView");
   var iconCode  = id("viewIconCode");
   var iconEye   = id("viewIconEye");
+  var footerEl  = id("footer");
+  var topbar    = doc.querySelector(".topbar");
 
-  var BASE_TITLE = "MyKK HTML Viewer";
+  var BASE_TITLE = "HTML Viewer";
   var MAX_HIGHLIGHT = 400000;   // skip highlighting past ~400 KB to stay snappy
 
   var rawText = "";
@@ -1486,33 +1516,50 @@ return He}()
   var codeBuiltFor = null;      // cache: which text the code view was built from
   var toastTimer = null;
 
-  // File extension -> highlight.js language (only languages bundled in this build)
-  var EXT_LANG = {
-    html:"xml", htm:"xml", xhtml:"xml", shtml:"xml", xml:"xml", svg:"xml",
-    rss:"xml", atom:"xml", xsl:"xml", plist:"xml", vue:"xml",
-    css:"css", scss:"scss", sass:"scss", less:"less",
-    js:"javascript", mjs:"javascript", cjs:"javascript", jsx:"javascript",
-    ts:"typescript", tsx:"typescript", mts:"typescript", cts:"typescript",
-    json:"json", json5:"json", jsonc:"json", map:"json", webmanifest:"json", geojson:"json",
-    md:"markdown", markdown:"markdown", mkd:"markdown", mdown:"markdown",
-    yml:"yaml", yaml:"yaml",
-    toml:"ini", ini:"ini", cfg:"ini", conf:"ini", env:"ini", properties:"ini", editorconfig:"ini",
-    py:"python", pyw:"python", rb:"ruby", php:"php", phtml:"php",
-    java:"java", c:"c", h:"c", cpp:"cpp", cc:"cpp", cxx:"cpp", hpp:"cpp", hh:"cpp", hxx:"cpp",
-    cs:"csharp", go:"go", rs:"rust", kt:"kotlin", kts:"kotlin", swift:"swift", sql:"sql",
-    sh:"bash", bash:"bash", zsh:"bash", pl:"perl", pm:"perl", lua:"lua", r:"r",
-    graphql:"graphql", gql:"graphql", diff:"diff", patch:"diff",
-    mk:"makefile", makefile:"makefile",
-    txt:"plaintext", text:"plaintext", log:"plaintext", csv:"plaintext", tsv:"plaintext"
+  // Accepted file types for the HTML viewer. Other file types (Markdown, data
+  // formats, EPUB, PDF, …) are handled by the sibling viewers, so they're
+  // rejected here. Validation is by extension, plus a few exact filenames.
+  var ACCEPT_EXT = {
+    html:1, htm:1, xhtml:1, xht:1, shtml:1, shtm:1, stm:1, hta:1, mhtml:1, mht:1,
+    css:1, scss:1, sass:1, less:1, styl:1, pcss:1, postcss:1,
+    js:1, mjs:1, cjs:1, jsx:1, ts:1, mts:1, cts:1, tsx:1, coffee:1,
+    htaccess:1, htpasswd:1, env:1, ini:1, conf:1, webmanifest:1, map:1,
+    php:1, phtml:1, asp:1, aspx:1, ascx:1, cshtml:1, vbhtml:1, jsp:1, jspx:1, cfm:1,
+    erb:1, rhtml:1, ejs:1, hbs:1, handlebars:1, mustache:1, njk:1, liquid:1,
+    jinja:1, j2:1, twig:1, pug:1, jade:1, haml:1, slim:1, vue:1, svelte:1, astro:1
   };
-  var PREVIEW_EXT = { html:1, htm:1, xhtml:1, shtml:1, svg:1 };
+  var ACCEPT_NAME = { "robots.txt":1, ".htaccess":1, ".htpasswd":1, ".env":1 };
+
+  // Extension -> highlight.js language (only languages bundled in this build;
+  // unknown-but-accepted types fall back to automatic detection).
+  var EXT_LANG = {
+    html:"xml", htm:"xml", xhtml:"xml", xht:"xml", shtml:"xml", shtm:"xml", stm:"xml",
+    hta:"xml", mhtml:"xml", mht:"xml",
+    css:"css", styl:"css", pcss:"css", postcss:"css", scss:"scss", sass:"scss", less:"less",
+    js:"javascript", mjs:"javascript", cjs:"javascript", jsx:"javascript",
+    ts:"typescript", mts:"typescript", cts:"typescript", tsx:"typescript",
+    php:"php", phtml:"php",
+    env:"ini", ini:"ini", conf:"ini",
+    webmanifest:"json", map:"json",
+    vue:"xml", svelte:"xml", astro:"xml", twig:"xml", liquid:"xml", njk:"xml",
+    jinja:"xml", j2:"xml", hbs:"xml", handlebars:"xml", mustache:"xml", ejs:"xml",
+    erb:"xml", rhtml:"xml", asp:"xml", aspx:"xml", ascx:"xml", cshtml:"xml",
+    vbhtml:"xml", jsp:"xml", jspx:"xml", cfm:"xml"
+  };
+  // Files rendered in the sandboxed iframe (everything else opens as source).
+  var PREVIEW_EXT = { html:1, htm:1, xhtml:1, xht:1, shtml:1, shtm:1, stm:1, hta:1 };
 
   function extOf(name){ var m = /\.([a-z0-9_]+)$/i.exec(name || ""); return m ? m[1].toLowerCase() : ""; }
   function langFor(ext){ return EXT_LANG[ext] || ""; }
+  function isAccepted(name){
+    if (!name) return true;                       // pasted/dropped text has no filename to check
+    var base = String(name).toLowerCase().split("/").pop().split("\\").pop();
+    return ACCEPT_NAME[base] === 1 || ACCEPT_EXT[extOf(base)] === 1;
+  }
 
   function sniffHtml(text){
     var t = String(text || "").replace(/^\uFEFF/, "").replace(/^\s+/, "").slice(0, 200).toLowerCase();
-    return t.indexOf("<!doctype html") === 0 || t.indexOf("<html") === 0 || t.indexOf("<svg") === 0;
+    return t.indexOf("<!doctype html") === 0 || t.indexOf("<html") === 0;
   }
 
   function escapeHtml(s){
@@ -1539,7 +1586,7 @@ return He}()
     docTitle.textContent = name || "";
     doc.title = name ? name + " — " + BASE_TITLE : BASE_TITLE;
     body.classList.add("viewing");
-    body.classList.remove("peek");
+    resetHeader();
 
     btnView.hidden = !previewable;
     if (previewable) preview.srcdoc = text;
@@ -1567,7 +1614,7 @@ return He}()
     iconCode.hidden = !toCode;
     iconEye.hidden = toCode;
     var label = toCode ? "View source" : "View rendered";
-    btnView.title = label;
+    btnView.setAttribute("data-tip", label);
     btnView.setAttribute("aria-label", toCode ? "View source code" : "View rendered HTML");
   }
 
@@ -1614,11 +1661,16 @@ return He}()
     empty.hidden = false;
     docTitle.textContent = "";
     doc.title = BASE_TITLE;
-    body.classList.remove("viewing", "peek");
+    body.classList.remove("viewing", "hdr-hidden");
+    clearTimeout(hdrIdleTimer);
   }
 
   function readFile(file){
     if (!file) return;
+    if (!isAccepted(file.name)){
+      toast("“" + file.name + "” isn’t a supported file type");
+      return;
+    }
     var reader = new FileReader();
     reader.onload  = function(e){ show(String(e.target.result || ""), file.name); };
     reader.onerror = function(){ toast("Could not read that file"); };
@@ -1637,12 +1689,6 @@ return He}()
   btnView.addEventListener("click", function(){
     if (!previewable) return;
     setMode(mode === "preview" ? "code" : "preview");
-  });
-
-  // "+" : clear the screen, then open the file dialog
-  id("btnNew").addEventListener("click", function(){
-    clearAll();
-    openDialog();
   });
 
   // Copy the raw source
@@ -1676,9 +1722,52 @@ return He}()
     if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openDialog(); }
   });
 
-  // Reveal/peek the hidden header by tapping the top strip (touch); desktop uses CSS :hover.
-  hoverZone.addEventListener("click", function(){ body.classList.toggle("peek"); });
-  codeView.addEventListener("click", function(){ body.classList.remove("peek"); });
+  // ---------- Header: hide on scroll-down; show on scroll-up or after 5s idle ----------
+  var HDR_IDLE_MS = 5000, HDR_THRESH = 6;
+  var hdrIdleTimer = null;
+  var lastPos = { win:0, code:0, frame:0 };
+
+  function showHeader(){ body.classList.remove("hdr-hidden"); }
+  function hideHeader(){ if (body.classList.contains("viewing")) body.classList.add("hdr-hidden"); }
+  function armIdleReveal(){ clearTimeout(hdrIdleTimer); hdrIdleTimer = setTimeout(showHeader, HDR_IDLE_MS); }
+  function resetHeader(){ lastPos.win = lastPos.code = lastPos.frame = 0; clearTimeout(hdrIdleTimer); showHeader(); }
+
+  function onScroll(key, pos){
+    if (!body.classList.contains("viewing")) return;
+    var delta = pos - lastPos[key];
+    lastPos[key] = pos;
+    if (delta > HDR_THRESH){ hideHeader(); armIdleReveal(); }                    // down -> hide, re-arm 5s reveal
+    else if (delta < -HDR_THRESH){ showHeader(); clearTimeout(hdrIdleTimer); }   // up   -> show
+    else { armIdleReveal(); }                                                    // near-still -> keep 5s reveal armed
+  }
+
+  window.addEventListener("scroll", function(){ onScroll("win", window.pageYOffset || root.scrollTop || 0); }, { passive:true });
+  codeView.addEventListener("scroll", function(){ onScroll("code", codeView.scrollTop); }, { passive:true });
+
+  // The preview iframe is sandbox="allow-same-origin" (scripts stay blocked), so the
+  // parent can observe its scroll and drive the header in rendered view too.
+  preview.addEventListener("load", function(){
+    lastPos.frame = 0;
+    try {
+      var w = preview.contentWindow;
+      if (w) w.addEventListener("scroll", function(){
+        var d = w.document && (w.document.scrollingElement || w.document.documentElement || w.document.body);
+        onScroll("frame", w.pageYOffset || (d && d.scrollTop) || 0);
+      }, { passive:true });
+    } catch (e){}
+  });
+
+  // Reveal by moving the pointer to the very top (desktop) or tapping the top strip (mobile).
+  hoverZone.addEventListener("mouseenter", showHeader);
+  hoverZone.addEventListener("click", showHeader);
+
+  // Measure the header so the source view can clear the fixed bar.
+  function measureHeader(){ root.style.setProperty("--hdr-h", (topbar ? topbar.offsetHeight : 56) + "px"); }
+  measureHeader();
+  window.addEventListener("resize", measureHeader);
+
+  // Footer: the close button hides the footer for this session (returns on reload).
+  id("btnHideFooter").addEventListener("click", function(){ if (footerEl) footerEl.hidden = true; });
 
   // ---------- Background color (chosen by the user, remembered in a cookie) ----------
   function setCookie(name, val){
