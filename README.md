@@ -1,11 +1,15 @@
-# MyKK HTML Viewer
+# HTML Viewer
 
 A fast, mobile-first, **single-file** HTML viewer. Drag & drop an HTML file
-(or any text file) anywhere on the page: HTML **renders** instantly, and one
-tap flips to a syntax-highlighted **code view**. CSS, SCSS, JS, JSON, YAML,
-Markdown, `.txt` — any text file — open straight into the highlighted source.
-It's a **viewer, not an editor** — no toolbars, no accounts, no uploads.
-Everything runs locally in your browser.
+anywhere on the page and it **renders** instantly; one tap flips to a
+syntax-highlighted **code view**. Web source files — CSS, SCSS, Less, JS, TS,
+and template/server files (Vue, Svelte, Astro, PHP, ERB, Twig, …) — open
+straight into the highlighted source. It's a **viewer, not an editor** — no
+toolbars, no accounts, no uploads. Everything runs locally in your browser.
+
+> Part of a family of viewers. Markdown, data formats (JSON/YAML/XML/CSV),
+> EPUB, and PDF each have their own dedicated viewer, so those file types are
+> intentionally **not** accepted here.
 
 🔗 **Live:** <https://html-viewer.us/>
 
@@ -13,17 +17,20 @@ Everything runs locally in your browser.
 
 ## Features
 
-- 🖥️ **Renders HTML** — drop an `.html`/`.htm`/`.svg` file and it renders in a
+- 🖥️ **Renders HTML** — drop an `.html`/`.htm`/`.xhtml` file and it renders in a
   **sandboxed iframe**, faithfully — its own inline CSS, images, and web fonts
   included.
 - `</>` **Code view** — a toggle button flips between the rendered page and the
-  **syntax-highlighted source**, with line numbers.
-- 📄 **Any text file** — `.css`, `.scss`, `.less`, `.js`, `.ts`, `.json`,
-  `.yaml`, `.md`, `.xml`, `.py`, `.sql`, `.sh`, `.txt`, and
+  **syntax-highlighted source**, with line numbers. Non-HTML source files open
+  straight into this view.
+- 📄 **Web source files** — `.css`, `.scss`, `.sass`, `.less`, `.js`, `.jsx`,
+  `.ts`, `.tsx`, `.php`, `.vue`, `.svelte`, `.astro`, and
   [many more](#supported-file-types) open directly into the highlighted source.
+- ✅ **File-type checking** — only HTML-family files are accepted; other types
+  (Markdown, data formats, EPUB, PDF) are politely declined so you land in the
+  right viewer.
 - 🏷️ **Filename in the header** — when you open or drop a file, its name shows
   in the top-left.
-- ➕ **New** (`+`) — clears the screen and opens a file picker.
 - 📋 **Copy** — copies the raw source to your clipboard.
 - 🗑️ **Clear** — empties the view.
 - 🎨 **Pick any background color** — a color swatch in the header lets you choose
@@ -31,13 +38,15 @@ Everything runs locally in your browser.
   contrast. Your choice is **remembered** — saved to a cookie, with a
   `localStorage` fallback so even a downloaded `file://` copy remembers it.
   Starts on white.
-- 🫥 **Distraction-free** — once a file is loaded the header slides away; move
-  your mouse to the **top of the window** (or tap the top edge on mobile) to
-  bring it back.
+- 🫥 **Distraction-free** — the header hides when you scroll **down** and comes
+  back when you scroll **up**, when you pause for 5 seconds, or when you move to
+  the top edge. The footer has a **×** to tuck it away entirely.
+- 📥 **Full-screen drop zone** — drag a file and the whole window becomes the
+  target. You can also **paste** source text directly.
 - 📱 **Mobile-first** & responsive, with safe-area support for notched phones.
-- 🔒 **Safe by default** — HTML is rendered inside a locked-down `sandbox`
-  iframe, so **scripts never run** and a malicious file can't touch the page or
-  your data. Your files never leave your device.
+- 🔒 **Safe by default** — HTML renders inside a `sandbox`ed iframe with **no
+  `allow-scripts`**, so a viewed page displays with its own styles but **can
+  never run JavaScript**. Your files never leave your device.
 - 🪶 **One file, no build** — `index.html` is self-contained (~150 KB) and the
   viewer works offline, even straight from `file://`.
 - 📊 **Privacy-friendly analytics** — the hosted site uses a self-hosted,
@@ -59,18 +68,25 @@ Any static web server works too — there is nothing to build.
 
 ## Supported file types
 
-**Rendered as a page** (with a toggle to source): `.html`, `.htm`, `.xhtml`,
-`.shtml`, `.svg`. A file with no extension is rendered too when its content
-starts with `<!doctype html>`, `<html>`, or `<svg>`.
+Dropped or opened files are validated: only HTML-family and web-source types
+are accepted; anything else shows a brief “not a supported file type” notice.
 
-**Opened as highlighted source:** `.css` · `.scss` · `.sass` · `.less` ·
-`.js` · `.mjs` · `.jsx` · `.ts` · `.tsx` · `.json` · `.json5` · `.xml` ·
-`.yaml`/`.yml` · `.toml`/`.ini` · `.md` · `.py` · `.rb` · `.php` · `.java` ·
-`.c`/`.h` · `.cpp` · `.cs` · `.go` · `.rs` · `.kt` · `.swift` · `.sql` ·
-`.sh`/`.bash` · `.pl` · `.lua` · `.r` · `.graphql` · `.diff`/`.patch` ·
-`makefile` · `.txt` · `.log` · `.csv` — and anything else drops in as plain
-text. The language is picked from the extension, falling back to
-automatic detection.
+**Rendered as a page** (with a toggle to source): `.html`, `.htm`, `.xhtml`,
+`.xht`, `.shtml`, `.shtm`, `.stm`, `.hta`. A file with no extension renders too
+when its content starts with `<!doctype html>` or `<html>`.
+
+**Opened as highlighted source:**
+
+- **Styles** — `.css` · `.scss` · `.sass` · `.less` · `.styl` · `.pcss` · `.postcss`
+- **Scripts** — `.js` · `.mjs` · `.cjs` · `.jsx` · `.ts` · `.mts` · `.cts` · `.tsx` · `.coffee`
+- **Templates / components** — `.vue` · `.svelte` · `.astro` · `.php` · `.phtml` ·
+  `.erb` · `.ejs` · `.hbs` · `.handlebars` · `.mustache` · `.njk` · `.liquid` ·
+  `.twig` · `.jinja` · `.j2` · `.pug` · `.jade` · `.haml` · `.slim` · `.asp` ·
+  `.aspx` · `.ascx` · `.cshtml` · `.vbhtml` · `.jsp` · `.jspx` · `.cfm` · `.rhtml`
+- **Config / misc** — `.env` · `.ini` · `.conf` · `.htaccess` · `.htpasswd` ·
+  `.webmanifest` · `.map` (sourcemaps) · `robots.txt` · `.mhtml` · `.mht`
+
+The language is picked from the extension, falling back to automatic detection.
 
 ## Deploy to Cloudflare Pages (auto-deploy from this repo)
 
@@ -99,7 +115,9 @@ Everything is in [`index.html`](index.html):
 - Your HTML/CSS/UI and the app logic — no build step, no tooling.
 - HTML is written to a **`sandbox`ed `<iframe>`** via `srcdoc`. The sandbox has
   no `allow-scripts`, so the rendered page displays with its own styles but
-  **cannot execute any JavaScript** — that's the security boundary.
+  **cannot execute any JavaScript** — that's the security boundary. (It uses
+  `allow-same-origin` only so the viewer can follow the frame's scroll to drive
+  the auto-hiding header; with no `allow-scripts`, no script ever runs.)
 - [**highlight.js**](https://github.com/highlightjs/highlight.js) `v11.9.0`
   (BSD-3-Clause) powers the code view, embedded inline (minified, with its
   license banner retained), so highlighting works with **no network
