@@ -162,6 +162,8 @@ Other external components:
 
 - **File-type icon** — the HTML5 shield favicon/header icon is from
   [vscode-icons](https://github.com/vscode-icons/vscode-icons) (MIT).
+- **JetBrains Mono** — heading/wordmark display font, subset in `fonts/`, from
+  [JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono) (SIL OFL-1.1).
 - **Analytics** — the hosted site uses [Plausible](https://plausible.io/)
   (self-hosted, cookieless).
 
