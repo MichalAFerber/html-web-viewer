@@ -1,0 +1,18 @@
+{
+  "name": "HTML Viewer",
+  "short_name": "HTML Viewer",
+  "description": "A fast, single-file HTML viewer. Drop an HTML file to render it, or a CSS/SCSS/JS/TS/template file to read the source with syntax highlighting.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

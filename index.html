@@ -25,7 +25,12 @@
 <!-- Privacy-friendly, cookieless analytics (self-hosted Plausible) -->
 <script defer data-domain="html-viewer.us" src="https://plausible.thompsonblack.us/js/script.outbound-links.file-downloads.tagged-events.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Ctitle%3Efile_type_html%3C%2Ftitle%3E%3Cpolygon%20points%3D%225.902%2027.201%203.655%202%2028.345%202%2026.095%2027.197%2015.985%2030%205.902%2027.201%22%20style%3D%22fill%3A%23e44f26%22%2F%3E%3Cpolygon%20points%3D%2216%2027.858%2024.17%2025.593%2026.092%204.061%2016%204.061%2016%2027.858%22%20style%3D%22fill%3A%23f1662a%22%2F%3E%3Cpolygon%20points%3D%2216%2013.407%2011.91%2013.407%2011.628%2010.242%2016%2010.242%2016%207.151%2015.989%207.151%208.25%207.151%208.324%207.981%209.083%2016.498%2016%2016.498%2016%2013.407%22%20style%3D%22fill%3A%23ebebeb%22%2F%3E%3Cpolygon%20points%3D%2216%2021.434%2015.986%2021.438%2012.544%2020.509%2012.324%2018.044%2010.651%2018.044%209.221%2018.044%209.654%2022.896%2015.986%2024.654%2016%2024.65%2016%2021.434%22%20style%3D%22fill%3A%23ebebeb%22%2F%3E%3Cpolygon%20points%3D%2215.989%2013.407%2015.989%2016.498%2019.795%2016.498%2019.437%2020.507%2015.989%2021.437%2015.989%2024.653%2022.326%2022.896%2022.372%2022.374%2023.098%2014.237%2023.174%2013.407%2022.341%2013.407%2015.989%2013.407%22%20style%3D%22fill%3A%23fff%22%2F%3E%3Cpolygon%20points%3D%2215.989%207.151%2015.989%209.071%2015.989%2010.235%2015.989%2010.242%2023.445%2010.242%2023.445%2010.242%2023.455%2010.242%2023.517%209.548%2023.658%207.981%2023.732%207.151%2015.989%207.151%22%20style%3D%22fill%3A%23fff%22%2F%3E%3C%2Fsvg%3E">
+<link rel="alternate icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/site.webmanifest">
 <style>
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url("fonts/JetBrainsMono-Bold.subset.woff2") format("woff2");unicode-range:U+0000-00FF,U+2013-2014,U+2018-2019,U+201C-201D,U+2026}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:800;font-display:swap;src:url("fonts/JetBrainsMono-ExtraBold.subset.woff2") format("woff2");unicode-range:U+0000-00FF,U+2013-2014,U+2018-2019,U+201C-201D,U+2026}
+.doc-title,.empty-title,.drop-card{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-.02em}
   :root{
     --bg:#ffffff; --surface:#ffffff; --header-bg:rgba(255,255,255,.9);
     --text:#1f2328; --muted:#656d76; --border:#d0d7de; --border-soft:#e5e7eb;
@@ -271,6 +276,10 @@
     </button>
     <button id="btnClear" class="iconbtn tip" type="button" data-tip="Clear" aria-label="Clear the view">
       <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+    </button>
+    <button id="themeToggle" class="iconbtn tip" type="button" data-tip="Light / dark" aria-label="Switch theme" aria-pressed="false">
+      <svg id="themeIconSun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      <svg id="themeIconMoon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>
     </button>
     <span class="swatch-wrap tip" data-tip="Background color">
       <input id="bgPicker" class="swatch" type="color" value="#ffffff" aria-label="Pick background color">
@@ -2012,7 +2021,7 @@ return He}()
   function loadColor(){
     var v = getCookie("mykk-bg");
     if (!isHex6(v)) { try { v = localStorage.getItem("mykk-bg"); } catch (e) { v = null; } }
-    return isHex6(v) ? v : "#ffffff";
+    return isHex6(v) ? v : ((window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "#0d1117" : "#ffffff");
   }
 
   var saved = loadColor();
@@ -2021,7 +2030,14 @@ return He}()
   bgPicker.addEventListener("input", function(){
     applyColor(bgPicker.value);
     saveColor(bgPicker.value);
+    syncThemeToggle();
   });
+
+  var themeToggle=document.getElementById("themeToggle"),themeIconSun=document.getElementById("themeIconSun"),themeIconMoon=document.getElementById("themeIconMoon");
+  function isDarkBg(){ try { return luminance(hexToRgb(bgPicker.value)) <= 0.179; } catch(e){ return false; } }
+  function syncThemeToggle(){ if(!themeToggle) return; var dark=isDarkBg(); themeToggle.setAttribute("aria-pressed", dark?"true":"false"); themeToggle.setAttribute("aria-label", dark?"Switch to light theme":"Switch to dark theme"); if(themeIconSun){ if(dark) themeIconSun.setAttribute("hidden",""); else themeIconSun.removeAttribute("hidden"); } if(themeIconMoon){ if(dark) themeIconMoon.removeAttribute("hidden"); else themeIconMoon.setAttribute("hidden",""); } }
+  if(themeToggle){ themeToggle.addEventListener("click", function(){ var next=isDarkBg()?"#ffffff":"#0d1117"; bgPicker.value=next; applyColor(next); saveColor(next); syncThemeToggle(); }); }
+  syncThemeToggle();
 
   // ---------- Drag & drop (anywhere) ----------
   var dragDepth = 0;
